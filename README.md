@@ -8,6 +8,8 @@ The author edit button is added underneath the title/tag edit button for discuss
 
 Users with "Update author" permission must also have the "View user list" permission to be able to search for users.
 
+> This extension was written live on YouTube. Watch the video on the [Clark writes code channel](https://www.youtube.com/watch?v=v89ro_sO0nU). Support me on [Patreon](https://www.patreon.com/clark_writes_code)!
+
 ### Installation
 
 Use [Bazaar](https://discuss.flarum.org/d/5151-flagrow-bazaar-the-extension-marketplace) or install manually with composer:
