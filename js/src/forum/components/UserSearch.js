@@ -63,7 +63,7 @@ export default class UserSearch extends Search {
         const view = super.view();
 
         // view = .Search, [] = .Search-input, [][] = input.FormControl
-        view.children[0].children[0].attrs.placeholder = extractText(app.translator.trans('clarkwinkelmann-author-change.forum.modal.search_placeholder'));
+        view.children[0].children[0].attrs.placeholder = extractText(app.translator.trans('clarkwinkelmann-author-change.forum.search.placeholder'));
 
         return view;
     }
