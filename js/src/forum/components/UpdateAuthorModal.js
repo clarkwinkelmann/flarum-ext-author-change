@@ -1,9 +1,12 @@
+import app from 'flarum/app';
 import Modal from 'flarum/components/Modal';
 import Button from 'flarum/components/Button';
 import Post from 'flarum/models/Post';
 import avatar from 'flarum/helpers/avatar';
 import username from 'flarum/helpers/username';
 import UserSearch from './UserSearch';
+
+/* global m */
 
 export default class UpdateAuthorModal extends Modal {
     constructor(related) {
@@ -82,7 +85,10 @@ export default class UpdateAuthorModal extends Modal {
         }).then(() => {
             this.loading = false;
             this.dirty = false;
+
             m.redraw();
+
+            app.modal.close();
         }).catch(err => {
             this.loading = false;
             m.redraw();

@@ -1,4 +1,5 @@
 import {extend} from 'flarum/extend';
+import app from 'flarum/app';
 import DiscussionControls from 'flarum/utils/DiscussionControls';
 import PostControls from 'flarum/utils/PostControls';
 import Button from 'flarum/components/Button';

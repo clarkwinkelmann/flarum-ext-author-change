@@ -1,7 +1,10 @@
+import app from 'flarum/app';
 import Search from 'flarum/components/Search';
 import ItemList from 'flarum/utils/ItemList';
 import extractText from 'flarum/utils/extractText';
 import UsersSearchSourceWithoutInternalRouting from './UsersSearchSourceWithoutInternalRouting';
+
+/* global $ */
 
 export default class UserSearch extends Search {
     selectUserIndex(index) {

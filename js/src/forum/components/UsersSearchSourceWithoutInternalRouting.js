@@ -1,5 +1,8 @@
+import app from 'flarum/app';
 import UsersSearchSource from 'flarum/components/UsersSearchSource';
 import Button from 'flarum/components/Button';
+
+/* global m */
 
 export default class UsersSearchSourceWithoutInternalRouting extends UsersSearchSource {
     view(query) {
