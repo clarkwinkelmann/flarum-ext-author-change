@@ -49,6 +49,19 @@ class SaveAuthor implements ExtenderInterface
                 $user = User::findOrFail($userId);
 
                 $model->user()->associate($user);
+
+                // Update discussion meta when editing a post
+                if ($model instanceof Post) {
+                    $model->afterSave(function () use ($model) {
+                        $model->discussion->refreshParticipantCount();
+
+                        if ($model->id === $model->discussion->last_post_id) {
+                            $model->discussion->setLastPost($model);
+                        }
+
+                        $model->discussion->save();
+                    });
+                }
             } else if (empty($data['relationships']['user']['data'])) {
                 $model->user()->dissociate();
             }
