@@ -12,7 +12,7 @@ Users with "Update author" permission must also have the "View user list" permis
 
 ### Installation
 
-Use [Bazaar](https://discuss.flarum.org/d/5151-flagrow-bazaar-the-extension-marketplace) or install manually with composer:
+Use [Bazaar](https://discuss.flarum.org/d/5151) or install manually with composer:
 
 ```sh
 composer require clarkwinkelmann/flarum-ext-author-change
@@ -26,4 +26,6 @@ composer update clarkwinkelmann/flarum-ext-author-change
 
 ### Links
 
+- [GitHub](https://github.com/clarkwinkelmann/flarum-ext-author-change)
 - [Packagist](https://packagist.org/packages/clarkwinkelmann/flarum-ext-author-change)
+- [Discuss](https://discuss.flarum.org/d/21731)
