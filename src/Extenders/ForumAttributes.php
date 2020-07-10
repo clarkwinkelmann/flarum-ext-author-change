@@ -18,7 +18,8 @@ class ForumAttributes implements ExtenderInterface
     public function attributes(Serializing $event)
     {
         if ($event->isSerializer(ForumSerializer::class)) {
-            $event->attributes['clarkwinkelmannAuthorChangeCanEdit'] = $event->actor->can('clarkwinkelmann-author-change.edit');
+            $event->attributes['clarkwinkelmannAuthorChangeCanEditUser'] = $event->actor->can('clarkwinkelmann-author-change.edit-user');
+            $event->attributes['clarkwinkelmannAuthorChangeCanEditDate'] = $event->actor->can('clarkwinkelmann-author-change.edit-date');
         }
     }
 }

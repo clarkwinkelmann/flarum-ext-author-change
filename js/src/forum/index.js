@@ -7,7 +7,7 @@ import UpdateAuthorModal from './components/UpdateAuthorModal';
 
 app.initializers.add('clarkwinkelmann/flarum-ext-author-change', () => {
     extend(DiscussionControls, 'moderationControls', (items, discussion) => {
-        if (!app.forum.attribute('clarkwinkelmannAuthorChangeCanEdit')) {
+        if (!app.forum.attribute('clarkwinkelmannAuthorChangeCanEditUser') && !app.forum.attribute('clarkwinkelmannAuthorChangeCanEditDate')) {
             return;
         }
 
@@ -21,7 +21,7 @@ app.initializers.add('clarkwinkelmann/flarum-ext-author-change', () => {
     });
 
     extend(PostControls, 'moderationControls', (items, post) => {
-        if (!app.forum.attribute('clarkwinkelmannAuthorChangeCanEdit')) {
+        if (!app.forum.attribute('clarkwinkelmannAuthorChangeCanEditUser') && !app.forum.attribute('clarkwinkelmannAuthorChangeCanEditDate')) {
             return;
         }
 

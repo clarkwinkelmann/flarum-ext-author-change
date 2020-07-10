@@ -2,6 +2,9 @@
 
 namespace ClarkWinkelmann\AuthorChange\Extenders;
 
+use Carbon\Carbon;
+use ClarkWinkelmann\AuthorChange\Event;
+use ClarkWinkelmann\AuthorChange\Validators\TimeValidator;
 use Flarum\Database\AbstractModel;
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\Event\Saving as DiscussionSaving;
@@ -38,15 +41,22 @@ class SaveAuthor implements ExtenderInterface
      * @param User $actor
      * @param array $data
      * @throws \Flarum\User\Exception\PermissionDeniedException
+     * @throws \Illuminate\Validation\ValidationException
      */
     protected function saveAuthor(AbstractModel $model, User $actor, array $data)
     {
         if (isset($data['relationships']['user']['data'])) {
-            $this->assertCan($actor, 'clarkwinkelmann-author-change.edit');
+            $this->assertCan($actor, 'clarkwinkelmann-author-change.edit-user');
+
+            if ($model instanceof Post) {
+                $model->raise(new Event\PostUserChanged($model, $model->user));
+            } else {
+                $model->raise(new Event\DiscussionUserChanged($model, $model->user));
+            }
 
             if (isset($data['relationships']['user']['data']['id'])) {
                 $userId = $data['relationships']['user']['data']['id'];
-                $user = User::findOrFail($userId);
+                $user = User::query()->findOrFail($userId);
 
                 $model->user()->associate($user);
 
@@ -64,6 +74,46 @@ class SaveAuthor implements ExtenderInterface
                 }
             } else if (empty($data['relationships']['user']['data'])) {
                 $model->user()->dissociate();
+            }
+        }
+
+        if (isset($data['attributes']['createdAt'])) {
+            $this->assertCan($actor, 'clarkwinkelmann-author-change.edit-date');
+
+            /**
+             * @var $validator TimeValidator
+             */
+            $validator = app(TimeValidator::class);
+            $validator->assertValid([
+                'time' => $data['attributes']['createdAt'],
+            ]);
+
+            if ($model instanceof Post) {
+                $model->raise(new Event\PostCreateDateChanged($model, $model->created_at));
+            } else {
+                $model->raise(new Event\DiscussionCreateDateChanged($model, $model->created_at));
+            }
+
+            $model->created_at = Carbon::parse($data['attributes']['createdAt']);
+        }
+
+        if (isset($data['attributes']['editedAt']) && $model instanceof Post) {
+            $this->assertCan($actor, 'clarkwinkelmann-author-change.edit-date');
+
+            $model->raise(new Event\PostEditDateChanged($model, $model->edited_at));
+
+            if (empty($data['attributes']['editedAt'])) {
+                $model->edited_at = null;
+            } else {
+                /**
+                 * @var $validator TimeValidator
+                 */
+                $validator = app(TimeValidator::class);
+                $validator->assertValid([
+                    'time' => $data['attributes']['editedAt'],
+                ]);
+
+                $model->edited_at = Carbon::parse($data['attributes']['editedAt']);
             }
         }
     }
