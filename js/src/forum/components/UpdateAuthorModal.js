@@ -4,25 +4,29 @@ import Button from 'flarum/components/Button';
 import Post from 'flarum/models/Post';
 import avatar from 'flarum/helpers/avatar';
 import username from 'flarum/helpers/username';
+import SearchState from 'flarum/states/SearchState';
 import UserSearch from './UserSearch';
 
 /* global m */
 
 export default class UpdateAuthorModal extends Modal {
-    constructor(related) {
-        super();
+    oninit(vnode) {
+        super.oninit(vnode);
 
-        this.related = related;
-        this.user = related.user();
-        this.createdAt = related.createdAt().toISOString().slice(0, 16);
-        this.editedAt = (this.isPost() && related.editedAt()) ? related.editedAt().toISOString().slice(0, 16) : '';
+        this.user = this.attrs.related.user();
+        this.createdAt = this.attrs.related.createdAt().toISOString().slice(0, 16);
+        this.editedAt = (this.isPost() && this.attrs.related.editedAt()) ? this.attrs.related.editedAt().toISOString().slice(0, 16) : '';
         this.attributes = {}; // What we will send to the server. We only send what changed
         this.dirty = false;
         this.loading = false;
+        this.userSearchState = new SearchState();
+
+        // Workaround for https://github.com/flarum/core/issues/2399
+        this.userSearchState.getInitialSearch = () => '';
     }
 
     isPost() {
-        return this.related instanceof Post;
+        return this.attrs.related instanceof Post;
     }
 
     className() {
@@ -53,6 +57,7 @@ export default class UpdateAuthorModal extends Modal {
                     username(this.user),
                 ]),
                 UserSearch.component({
+                    state: this.userSearchState,
                     onsubmit: user => {
                         this.user = user;
                         this.attributes.relationships = {
@@ -94,15 +99,13 @@ export default class UpdateAuthorModal extends Modal {
                     loading: this.loading,
                     type: 'submit',
                     className: 'Button Button--primary',
-                    children: app.translator.trans('clarkwinkelmann-author-change.forum.modal.submit'),
-                }),
+                }, app.translator.trans('clarkwinkelmann-author-change.forum.modal.submit')),
                 Button.component({
                     className: 'Button CancelButton',
-                    children: app.translator.trans('clarkwinkelmann-author-change.forum.modal.cancel'),
                     onclick() {
                         app.modal.close();
                     },
-                }),
+                }, app.translator.trans('clarkwinkelmann-author-change.forum.modal.cancel')),
             ]),
         ]);
     }
@@ -112,7 +115,7 @@ export default class UpdateAuthorModal extends Modal {
 
         this.loading = true;
 
-        this.related.save(this.attributes).then(() => {
+        this.attrs.related.save(this.attributes).then(() => {
             this.loading = false;
             this.dirty = false;
 

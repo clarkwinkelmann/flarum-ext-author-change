@@ -10,16 +10,18 @@ export default class UsersSearchSourceWithoutInternalRouting extends UsersSearch
 
         if (!view) {
             if (query.length < 3) {
-                return m('li', Button.component({
-                    icon: 'fas fa-info-circle',
-                    children: app.translator.trans('clarkwinkelmann-author-change.forum.search.type-more'),
-                }));
+                return [
+                    m('li', Button.component({
+                        icon: 'fas fa-info-circle',
+                    }, app.translator.trans('clarkwinkelmann-author-change.forum.search.type-more'))),
+                ];
             }
 
-            return m('li', Button.component({
-                icon: 'fas fa-search-minus',
-                children: app.translator.trans('clarkwinkelmann-author-change.forum.search.no-results'),
-            }));
+            return [
+                m('li', Button.component({
+                    icon: 'fas fa-search-minus',
+                }, app.translator.trans('clarkwinkelmann-author-change.forum.search.no-results'))),
+            ];
         }
 
         let resultItems = null;
@@ -46,15 +48,16 @@ export default class UsersSearchSourceWithoutInternalRouting extends UsersSearch
 
         resultItems.forEach(result => {
             if (Array.isArray(result.children) && result.children.length > 0) {
-                delete result.children[0].attrs.config;
+                // We use a normal link instead of Mithril's Link so that we can cancel navigation
+                // with preventDefault() in UserSearch component
+                result.children[0].tag = 'a';
             }
         });
 
         if (query.length < 3) {
             resultItems.push(m('li', Button.component({
                 icon: 'fas fa-info-circle',
-                children: app.translator.trans('clarkwinkelmann-author-change.forum.search.type-more'),
-            })));
+            }, app.translator.trans('clarkwinkelmann-author-change.forum.search.type-more'))));
         }
 
         return resultItems;

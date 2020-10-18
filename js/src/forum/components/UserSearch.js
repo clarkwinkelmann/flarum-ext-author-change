@@ -12,13 +12,11 @@ export default class UserSearch extends Search {
 
         const user = app.store.getById('users', userId);
 
-        this.props.onsubmit(user);
+        this.attrs.onsubmit(user);
     }
 
-    config(isInitialized) {
-        super.config(isInitialized);
-
-        if (isInitialized) return;
+    oncreate(vnode) {
+        super.oncreate(vnode);
 
         this.$('.Search-results').on('click', event => {
             const $userSearchResult = $(event.target).parents('.UserSearchResult');
@@ -39,7 +37,7 @@ export default class UserSearch extends Search {
         clearTimeout(this.searchTimeout);
         this.loadingSources = 0;
 
-        if (this.value()) {
+        if (this.state.getValue()) {
             this.selectUserIndex(this.index);
         } else {
             this.clear();
@@ -49,7 +47,7 @@ export default class UserSearch extends Search {
     }
 
     clear() {
-        this.value('');
+        super.clear();
 
         m.redraw();
     }
@@ -62,8 +60,8 @@ export default class UserSearch extends Search {
         return items;
     }
 
-    view() {
-        const view = super.view();
+    view(vnode) {
+        const view = super.view(vnode);
 
         // view = .Search, [] = .Search-input, [][] = input.FormControl
         view.children[0].children[0].attrs.placeholder = extractText(app.translator.trans('clarkwinkelmann-author-change.forum.search.placeholder'));
