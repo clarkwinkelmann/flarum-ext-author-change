@@ -13,11 +13,12 @@ app.initializers.add('clarkwinkelmann/flarum-ext-author-change', () => {
 
         items.add('clarkwinkelmann-author-change', Button.component({
             icon: 'fas fa-user-edit',
-            children: app.translator.trans('clarkwinkelmann-author-change.forum.controls.edit'),
             onclick() {
-                app.modal.show(new UpdateAuthorModal(discussion));
+                app.modal.show(UpdateAuthorModal, {
+                    related: discussion,
+                });
             },
-        }));
+        }, app.translator.trans('clarkwinkelmann-author-change.forum.controls.edit')));
     });
 
     extend(PostControls, 'moderationControls', (items, post) => {
@@ -27,10 +28,11 @@ app.initializers.add('clarkwinkelmann/flarum-ext-author-change', () => {
 
         items.add('clarkwinkelmann-author-change', Button.component({
             icon: 'fas fa-user-edit',
-            children: app.translator.trans('clarkwinkelmann-author-change.forum.controls.edit'),
             onclick() {
-                app.modal.show(new UpdateAuthorModal(post));
+                app.modal.show(UpdateAuthorModal, {
+                    related: post,
+                });
             },
-        }));
+        }, app.translator.trans('clarkwinkelmann-author-change.forum.controls.edit')));
     });
 });

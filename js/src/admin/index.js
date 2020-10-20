@@ -1,3 +1,4 @@
+import app from 'flarum/app';
 import {extend} from 'flarum/extend';
 import PermissionGrid from 'flarum/components/PermissionGrid';
 
