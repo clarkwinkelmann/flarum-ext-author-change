@@ -5,7 +5,7 @@ import PostControls from 'flarum/utils/PostControls';
 import Button from 'flarum/components/Button';
 import UpdateAuthorModal from './components/UpdateAuthorModal';
 
-app.initializers.add('clarkwinkelmann/flarum-ext-author-change', () => {
+app.initializers.add('clarkwinkelmann-author-change', () => {
     extend(DiscussionControls, 'moderationControls', (items, discussion) => {
         if (!app.forum.attribute('clarkwinkelmannAuthorChangeCanEditUser') && !app.forum.attribute('clarkwinkelmannAuthorChangeCanEditDate')) {
             return;

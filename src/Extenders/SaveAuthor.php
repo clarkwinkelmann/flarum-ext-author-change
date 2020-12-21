@@ -12,14 +12,11 @@ use Flarum\Extend\ExtenderInterface;
 use Flarum\Extension\Extension;
 use Flarum\Post\Event\Saving as PostSaving;
 use Flarum\Post\Post;
-use Flarum\User\AssertPermissionTrait;
 use Flarum\User\User;
 use Illuminate\Contracts\Container\Container;
 
 class SaveAuthor implements ExtenderInterface
 {
-    use AssertPermissionTrait;
-
     public function extend(Container $container, Extension $extension = null)
     {
         $container['events']->listen(DiscussionSaving::class, [$this, 'saveDiscussion']);
@@ -46,7 +43,7 @@ class SaveAuthor implements ExtenderInterface
     protected function saveAuthor(AbstractModel $model, User $actor, array $data)
     {
         if (isset($data['relationships']['user']['data'])) {
-            $this->assertCan($actor, 'clarkwinkelmann-author-change.edit-user');
+            $actor->assertCan('clarkwinkelmann-author-change.edit-user');
 
             if ($model instanceof Post) {
                 $model->raise(new Event\PostUserChanged($model, $model->user));
@@ -78,7 +75,7 @@ class SaveAuthor implements ExtenderInterface
         }
 
         if (isset($data['attributes']['createdAt'])) {
-            $this->assertCan($actor, 'clarkwinkelmann-author-change.edit-date');
+            $actor->assertCan('clarkwinkelmann-author-change.edit-date');
 
             /**
              * @var $validator TimeValidator
@@ -98,7 +95,7 @@ class SaveAuthor implements ExtenderInterface
         }
 
         if (isset($data['attributes']['editedAt']) && $model instanceof Post) {
-            $this->assertCan($actor, 'clarkwinkelmann-author-change.edit-date');
+            $actor->assertCan('clarkwinkelmann-author-change.edit-date');
 
             $model->raise(new Event\PostEditDateChanged($model, $model->edited_at));
 

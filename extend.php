@@ -2,9 +2,7 @@
 
 namespace ClarkWinkelmann\AuthorChange;
 
-use ClarkWinkelmann\AuthorChange\Extenders\DiscussionIncludes;
-use ClarkWinkelmann\AuthorChange\Extenders\ForumAttributes;
-use ClarkWinkelmann\AuthorChange\Extenders\SaveAuthor;
+use Flarum\Api\Controller;
 use Flarum\Extend;
 
 return [
@@ -17,7 +15,13 @@ return [
 
     new Extend\Locales(__DIR__ . '/resources/locale'),
 
-    new DiscussionIncludes(),
-    new ForumAttributes(),
-    new SaveAuthor(),
+    (new Extend\ApiController(Controller\ShowDiscussionController::class))
+        ->addInclude('user'),
+    (new Extend\ApiController(Controller\CreateDiscussionController::class))
+        ->addInclude('user'),
+    (new Extend\ApiController(Controller\UpdateDiscussionController::class))
+        ->addInclude('user'),
+
+    new Extenders\ForumAttributes(),
+    new Extenders\SaveAuthor(),
 ];

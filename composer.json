@@ -7,7 +7,7 @@
     "type": "flarum-extension",
     "license": "MIT",
     "require": {
-        "flarum/core": ">=0.1.0-beta.14 <0.1.0-beta.15"
+        "flarum/core": ">=0.1.0-beta.15 <0.1.0-beta.16"
     },
     "replace": {
         "clarkwinkelmann/flarum-ext-post-date": "*"
@@ -19,6 +19,11 @@
             "role": "Developer"
         }
     ],
+    "support": {
+        "issues": "https://github.com/clarkwinkelmann/flarum-ext-author-change/issues",
+        "source": "https://github.com/clarkwinkelmann/flarum-ext-author-change",
+        "forum": "https://discuss.flarum.org/d/21731"
+    },
     "autoload": {
         "psr-4": {
             "ClarkWinkelmann\\AuthorChange\\": "src/"
@@ -27,6 +32,7 @@
     "extra": {
         "flarum-extension": {
             "title": "Author Change",
+            "category": "moderation",
             "icon": {
                 "name": "fas fa-user-edit",
                 "backgroundColor": "#684ba6",

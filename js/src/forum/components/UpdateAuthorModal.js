@@ -74,22 +74,22 @@ export default class UpdateAuthorModal extends Modal {
                     m('label', app.translator.trans('clarkwinkelmann-author-change.forum.modal.created_at')),
                     m('input[type=datetime-local][required].FormControl', {
                         value: this.createdAt,
-                        onchange: m.withAttr('value', value => {
-                            this.createdAt = value;
-                            this.attributes.createdAt = value;
+                        onchange: event => {
+                            this.createdAt = event.target.value;
+                            this.attributes.createdAt = event.target.value;
                             this.dirty = true;
-                        }),
+                        },
                     }),
                 ]),
                 this.isPost() ? m('.Form-group', [
                     m('label', app.translator.trans('clarkwinkelmann-author-change.forum.modal.edited_at')),
                     m('input[type=datetime-local].FormControl', {
                         value: this.editedAt,
-                        onchange: m.withAttr('value', value => {
-                            this.editedAt = value;
-                            this.attributes.editedAt = value;
+                        onchange: event => {
+                            this.editedAt = event.target.value;
+                            this.attributes.editedAt = event.target.value;
                             this.dirty = true;
-                        }),
+                        },
                     }),
                 ]) : null,
             ] : null,
