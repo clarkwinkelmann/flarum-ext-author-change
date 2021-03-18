@@ -37,11 +37,14 @@ abstract class AbstractSaveAuthor
                 $model->raise(new Event\DiscussionUserChanged($model, $model->user));
             }
 
+            $oldUser = $model->user;
+            $newUser = null;
+
             if (isset($data['relationships']['user']['data']['id'])) {
                 $userId = $data['relationships']['user']['data']['id'];
-                $user = User::query()->findOrFail($userId);
+                $newUser = User::query()->findOrFail($userId);
 
-                $model->user()->associate($user);
+                $model->user()->associate($newUser);
 
                 // Update discussion meta when editing a post
                 if ($model instanceof Post) {
@@ -58,6 +61,29 @@ abstract class AbstractSaveAuthor
             } else if (empty($data['relationships']['user']['data'])) {
                 $model->user()->dissociate();
             }
+
+            // Update user metadata
+            $model->afterSave(function () use ($model, $oldUser, $newUser) {
+                if ($oldUser) {
+                    if ($model instanceof Post) {
+                        $oldUser->refreshCommentCount();
+                    } else {
+                        $oldUser->refreshDiscussionCount();
+                    }
+
+                    $oldUser->save();
+                }
+
+                if ($newUser) {
+                    if ($model instanceof Post) {
+                        $newUser->refreshCommentCount();
+                    } else {
+                        $newUser->refreshDiscussionCount();
+                    }
+
+                    $newUser->save();
+                }
+            });
         }
 
         if (isset($data['attributes']['createdAt'])) {
