@@ -1,36 +1,22 @@
 <?php
 
-namespace ClarkWinkelmann\AuthorChange\Extenders;
+namespace ClarkWinkelmann\AuthorChange\Listeners;
 
 use Carbon\Carbon;
 use ClarkWinkelmann\AuthorChange\Event;
 use ClarkWinkelmann\AuthorChange\Validators\TimeValidator;
 use Flarum\Database\AbstractModel;
 use Flarum\Discussion\Discussion;
-use Flarum\Discussion\Event\Saving as DiscussionSaving;
-use Flarum\Extend\ExtenderInterface;
-use Flarum\Extension\Extension;
-use Flarum\Post\Event\Saving as PostSaving;
 use Flarum\Post\Post;
 use Flarum\User\User;
-use Illuminate\Contracts\Container\Container;
 
-class SaveAuthor implements ExtenderInterface
+abstract class AbstractSaveAuthor
 {
-    public function extend(Container $container, Extension $extension = null)
-    {
-        $container['events']->listen(DiscussionSaving::class, [$this, 'saveDiscussion']);
-        $container['events']->listen(PostSaving::class, [$this, 'savePost']);
-    }
+    protected $timeValidator;
 
-    public function saveDiscussion(DiscussionSaving $event)
+    public function __construct(TimeValidator $timeValidator)
     {
-        $this->saveAuthor($event->discussion, $event->actor, $event->data);
-    }
-
-    public function savePost(PostSaving $event)
-    {
-        $this->saveAuthor($event->post, $event->actor, $event->data);
+        $this->timeValidator = $timeValidator;
     }
 
     /**
@@ -77,11 +63,7 @@ class SaveAuthor implements ExtenderInterface
         if (isset($data['attributes']['createdAt'])) {
             $actor->assertCan('clarkwinkelmann-author-change.edit-date');
 
-            /**
-             * @var $validator TimeValidator
-             */
-            $validator = app(TimeValidator::class);
-            $validator->assertValid([
+            $this->timeValidator->assertValid([
                 'time' => $data['attributes']['createdAt'],
             ]);
 
@@ -102,11 +84,7 @@ class SaveAuthor implements ExtenderInterface
             if (empty($data['attributes']['editedAt'])) {
                 $model->edited_at = null;
             } else {
-                /**
-                 * @var $validator TimeValidator
-                 */
-                $validator = app(TimeValidator::class);
-                $validator->assertValid([
+                $this->timeValidator->assertValid([
                     'time' => $data['attributes']['editedAt'],
                 ]);
 
