@@ -1,17 +1,16 @@
 import * as Mithril from 'mithril';
 import app from 'flarum/forum/app';
+import {ComponentAttrs} from 'flarum/common/Component';
 import Modal from 'flarum/common/components/Modal';
 import Button from 'flarum/common/components/Button';
 import Discussion from 'flarum/common/models/Discussion';
 import Post from 'flarum/common/models/Post';
+import User from 'flarum/common/models/User';
 import avatar from 'flarum/common/helpers/avatar';
 import username from 'flarum/common/helpers/username';
 import SearchState from 'flarum/forum/states/SearchState';
+import Switch from 'flarum/common/components/Switch';
 import UserSearch from './UserSearch';
-import {ComponentAttrs} from "flarum/common/Component";
-import User from "flarum/common/models/User";
-
-/* global m */
 
 interface UpdateAuthorModalAttrs extends ComponentAttrs {
     related: Discussion | Post
@@ -23,6 +22,8 @@ export default class UpdateAuthorModal extends Modal {
     user!: User | null | false
     createdAt!: string
     editedAt!: string
+    syncFirstPost: boolean = false
+    otherModelForFirstPostSync: Discussion | Post | false = false
     attributes: any = {}; // What we will send to the server. We only send what changed
     dirty: boolean = false
     loading: boolean = false
@@ -31,18 +32,48 @@ export default class UpdateAuthorModal extends Modal {
     oninit(vnode: Mithril.Vnode<UpdateAuthorModalAttrs, this>) {
         super.oninit(vnode);
 
-        const editedAt = this.attrs.related instanceof Post && this.attrs.related.editedAt();
+        const {related} = this.attrs;
 
-        this.user = this.attrs.related.user();
-        this.createdAt = this.attrs.related.createdAt().toISOString().slice(0, 16);
+        const editedAt = related instanceof Post && related.editedAt();
+
+        this.user = related.user();
+        this.createdAt = related.createdAt().toISOString().slice(0, 16);
         this.editedAt = editedAt ? editedAt.toISOString().slice(0, 16) : '';
         this.userSearchState = new SearchState();
 
         // Workaround for https://github.com/flarum/core/issues/2399
         this.userSearchState.getInitialSearch = () => '';
+
+        if (this.showFirstPostSync()) {
+            if (related instanceof Discussion) {
+                this.otherModelForFirstPostSync = related.firstPost();
+
+                // The firstPost relationship will not be loaded if the discussion is accessed directly
+                // we will try to find the first post in the store
+                if (this.otherModelForFirstPostSync === false) {
+                    this.otherModelForFirstPostSync = app.store.all('posts').find(post => {
+                        return post.number() === 1 && post.discussion() === related;
+                    }) || false;
+                }
+            } else {
+                this.otherModelForFirstPostSync = related.discussion();
+            }
+
+            if (
+                this.otherModelForFirstPostSync &&
+                this.otherModelForFirstPostSync.user() === this.user &&
+                this.otherModelForFirstPostSync.createdAt().toISOString().slice(0, 16) === this.createdAt
+            ) {
+                this.syncFirstPost = true;
+            }
+        }
     }
 
-    isPost() {
+    showFirstPostSync(): boolean {
+        return (this.attrs.related instanceof Discussion) || this.attrs.related.number() === 1;
+    }
+
+    isPost(): boolean {
         return this.attrs.related instanceof Post;
     }
 
@@ -64,7 +95,7 @@ export default class UpdateAuthorModal extends Modal {
                         onclick: () => {
                             this.user = null;
                             this.attributes.relationships = {
-                                user: [],
+                                user: [], // https://github.com/flarum/core/issues/2876
                             };
                             this.dirty = true;
                         },
@@ -101,6 +132,7 @@ export default class UpdateAuthorModal extends Modal {
                             this.attributes.createdAt = value;
                             this.dirty = true;
                         },
+                        disabled: this.loading,
                     }),
                 ]),
                 this.isPost() ? m('.Form-group', [
@@ -115,9 +147,33 @@ export default class UpdateAuthorModal extends Modal {
                             this.attributes.editedAt = value;
                             this.dirty = true;
                         },
+                        disabled: this.loading,
                     }),
                 ]) : null,
             ] : null,
+            this.showFirstPostSync() ? m('.Form-group', [
+                Switch.component({
+                    state: this.syncFirstPost,
+                    onchange: (value: boolean) => {
+                        this.syncFirstPost = value;
+                        this.dirty = true;
+
+                        // We only put the values inside attributes when they change
+                        // but when switching the sync checkbox to true we want to force a sync of both attributes that
+                        // are on discussion+post
+                        if (value) {
+                            this.attributes.relationships = {
+                                user: this.user || [],
+                            };
+
+                            this.attributes.createdAt = this.createdAt;
+                        }
+                    },
+                    // Disable checkbox if other model isn't available since we won't have the ID to save it
+                    disabled: this.loading || !this.otherModelForFirstPostSync,
+                }, app.translator.trans('clarkwinkelmann-author-change.forum.modal.sync-with-' + (this.isPost() ? 'discussion' : 'post'))),
+                this.otherModelForFirstPostSync ? null : m('.helpText', app.translator.trans('clarkwinkelmann-author-change.forum.modal.sync-impossible'))
+            ]) : null,
             m('.Form-group', [
                 Button.component({
                     disabled: !this.dirty,
@@ -135,13 +191,26 @@ export default class UpdateAuthorModal extends Modal {
         ]);
     }
 
+    saveModel(model: Discussion | Post) {
+        return model.save({
+            // Clone this.attributes so Model.save doesn't delete the relationships key
+            ...this.attributes,
+        });
+    }
+
     // @ts-ignore TODO wrong Modal.onsubmit typings
     onsubmit(e) {
         e.preventDefault();
 
         this.loading = true;
 
-        this.attrs.related.save(this.attributes).then(() => {
+        this.saveModel(this.attrs.related).then(() => {
+            if (this.syncFirstPost && this.otherModelForFirstPostSync) {
+                return this.saveModel(this.otherModelForFirstPostSync);
+            }
+
+            return Promise.resolve();
+        }).then(() => {
             this.loading = false;
             this.dirty = false;
 
