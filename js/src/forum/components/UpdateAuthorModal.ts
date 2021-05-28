@@ -1,24 +1,41 @@
-import app from 'flarum/app';
-import Modal from 'flarum/components/Modal';
-import Button from 'flarum/components/Button';
-import Post from 'flarum/models/Post';
-import avatar from 'flarum/helpers/avatar';
-import username from 'flarum/helpers/username';
-import SearchState from 'flarum/states/SearchState';
+import * as Mithril from 'mithril';
+import app from 'flarum/forum/app';
+import Modal from 'flarum/common/components/Modal';
+import Button from 'flarum/common/components/Button';
+import Discussion from 'flarum/common/models/Discussion';
+import Post from 'flarum/common/models/Post';
+import avatar from 'flarum/common/helpers/avatar';
+import username from 'flarum/common/helpers/username';
+import SearchState from 'flarum/forum/states/SearchState';
 import UserSearch from './UserSearch';
+import {ComponentAttrs} from "flarum/common/Component";
+import User from "flarum/common/models/User";
 
 /* global m */
 
+interface UpdateAuthorModalAttrs extends ComponentAttrs {
+    related: Discussion | Post
+}
+
+// @ts-ignore TODO wrong Modal.view typings
 export default class UpdateAuthorModal extends Modal {
-    oninit(vnode) {
+    attrs!: UpdateAuthorModalAttrs
+    user!: User | null | false
+    createdAt!: string
+    editedAt!: string
+    attributes: any = {}; // What we will send to the server. We only send what changed
+    dirty: boolean = false
+    loading: boolean = false
+    userSearchState!: SearchState
+
+    oninit(vnode: Mithril.Vnode<UpdateAuthorModalAttrs, this>) {
         super.oninit(vnode);
+
+        const editedAt = this.attrs.related instanceof Post && this.attrs.related.editedAt();
 
         this.user = this.attrs.related.user();
         this.createdAt = this.attrs.related.createdAt().toISOString().slice(0, 16);
-        this.editedAt = (this.isPost() && this.attrs.related.editedAt()) ? this.attrs.related.editedAt().toISOString().slice(0, 16) : '';
-        this.attributes = {}; // What we will send to the server. We only send what changed
-        this.dirty = false;
-        this.loading = false;
+        this.editedAt = editedAt ? editedAt.toISOString().slice(0, 16) : '';
         this.userSearchState = new SearchState();
 
         // Workaround for https://github.com/flarum/core/issues/2399
@@ -53,12 +70,14 @@ export default class UpdateAuthorModal extends Modal {
                         },
                         className: 'Button Button--icon Button--link RemoveUserButton',
                     }) : null,
+                    // @ts-ignore TODO wrong avatar typings
                     avatar(this.user),
+                    // @ts-ignore TODO wrong username typings
                     username(this.user),
                 ]),
                 UserSearch.component({
                     state: this.userSearchState,
-                    onsubmit: user => {
+                    onsubmit: (user: User) => {
                         this.user = user;
                         this.attributes.relationships = {
                             user,
@@ -74,9 +93,12 @@ export default class UpdateAuthorModal extends Modal {
                     m('label', app.translator.trans('clarkwinkelmann-author-change.forum.modal.created_at')),
                     m('input[type=datetime-local][required].FormControl', {
                         value: this.createdAt,
-                        onchange: event => {
-                            this.createdAt = event.target.value;
-                            this.attributes.createdAt = event.target.value;
+                        onchange: (event: Event) => {
+                            // @ts-ignore we know target has a value
+                            const {value} = event.target;
+
+                            this.createdAt = value;
+                            this.attributes.createdAt = value;
                             this.dirty = true;
                         },
                     }),
@@ -85,9 +107,12 @@ export default class UpdateAuthorModal extends Modal {
                     m('label', app.translator.trans('clarkwinkelmann-author-change.forum.modal.edited_at')),
                     m('input[type=datetime-local].FormControl', {
                         value: this.editedAt,
-                        onchange: event => {
-                            this.editedAt = event.target.value;
-                            this.attributes.editedAt = event.target.value;
+                        onchange: (event: Event) => {
+                            // @ts-ignore we know target has a value
+                            const {value} = event.target;
+
+                            this.editedAt = value;
+                            this.attributes.editedAt = value;
                             this.dirty = true;
                         },
                     }),
@@ -110,6 +135,7 @@ export default class UpdateAuthorModal extends Modal {
         ]);
     }
 
+    // @ts-ignore TODO wrong Modal.onsubmit typings
     onsubmit(e) {
         e.preventDefault();
 

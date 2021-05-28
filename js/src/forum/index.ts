@@ -1,12 +1,15 @@
-import {extend} from 'flarum/extend';
-import app from 'flarum/app';
-import DiscussionControls from 'flarum/utils/DiscussionControls';
-import PostControls from 'flarum/utils/PostControls';
-import Button from 'flarum/components/Button';
+import {extend} from 'flarum/common/extend';
+import app from 'flarum/forum/app';
+import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
+import PostControls from 'flarum/forum/utils/PostControls';
+import Button from 'flarum/common/components/Button';
+import ItemList from 'flarum/common/utils/ItemList';
+import Discussion from 'flarum/common/models/Discussion';
+import Post from 'flarum/common/models/Post';
 import UpdateAuthorModal from './components/UpdateAuthorModal';
 
 app.initializers.add('clarkwinkelmann-author-change', () => {
-    extend(DiscussionControls, 'moderationControls', (items, discussion) => {
+    extend(DiscussionControls, 'moderationControls', function (items: ItemList, discussion: Discussion) {
         if (!app.forum.attribute('clarkwinkelmannAuthorChangeCanEditUser') && !app.forum.attribute('clarkwinkelmannAuthorChangeCanEditDate')) {
             return;
         }
@@ -21,7 +24,7 @@ app.initializers.add('clarkwinkelmann-author-change', () => {
         }, app.translator.trans('clarkwinkelmann-author-change.forum.controls.edit')));
     });
 
-    extend(PostControls, 'moderationControls', (items, post) => {
+    extend(PostControls, 'moderationControls', function (items: ItemList, post: Post) {
         if (!app.forum.attribute('clarkwinkelmannAuthorChangeCanEditUser') && !app.forum.attribute('clarkwinkelmannAuthorChangeCanEditDate')) {
             return;
         }

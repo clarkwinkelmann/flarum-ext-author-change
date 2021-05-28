@@ -1,14 +1,13 @@
-import app from 'flarum/app';
-import UsersSearchSource from 'flarum/components/UsersSearchSource';
-import Button from 'flarum/components/Button';
-
-/* global m */
+import * as Mithril from 'mithril';
+import app from 'flarum/forum/app';
+import UsersSearchSource from 'flarum/forum/components/UsersSearchSource';
+import Button from 'flarum/common/components/Button';
 
 export default class UsersSearchSourceWithoutInternalRouting extends UsersSearchSource {
-    view(query) {
+    view(query: string): Array<Mithril.Vnode> {
         const view = super.view(query);
 
-        if (!view) {
+        if (view.length === 0) {
             if (query.length < 3) {
                 return [
                     m('li', Button.component({
@@ -24,16 +23,16 @@ export default class UsersSearchSourceWithoutInternalRouting extends UsersSearch
             ];
         }
 
-        let resultItems = null;
+        let resultItems: Array<Mithril.Vnode> = [];
 
         // We want to keep only the result <li>s, and not any header or stuff injected by another extension
         // In core:
         // view[0] is the header
-        // view[1] are the results
+        // view[1+] are the results
         // When fof/user-directory is installed, view[1] is the link to the user directory page
         view.some(entry => {
-            if (Array.isArray(entry) && entry.length > 0 && entry[0].attrs && entry[0].attrs.className.indexOf('UserSearchResult') !== -1) {
-                resultItems = entry;
+            if (entry.attrs && entry.attrs.className.indexOf('UserSearchResult') !== -1) {
+                resultItems.push(entry);
 
                 return true;
             }
@@ -41,12 +40,14 @@ export default class UsersSearchSourceWithoutInternalRouting extends UsersSearch
             return false;
         });
 
-        if (resultItems === null) {
+        if (resultItems.length === 0) {
             // Not translating this as it shouldn't be visible
-            return m('li', '[extension conflict]');
+            return [
+                m('li', '[extension conflict]'),
+            ];
         }
 
-        resultItems.forEach(result => {
+        resultItems.forEach((result: any) => {
             if (Array.isArray(result.children) && result.children.length > 0) {
                 // We use a normal link instead of Mithril's Link so that we can cancel navigation
                 // with preventDefault() in UserSearch component
