@@ -7,7 +7,16 @@ export default class UsersSearchSourceWithoutInternalRouting extends UsersSearch
     view(query: string): Array<Mithril.Vnode> {
         const view = super.view(query);
 
-        if (view.length === 0) {
+        // We want to keep only the result <li>s, and not any header or stuff injected by another extension
+        // In core:
+        // view[0] is the header
+        // view[1+] are the results
+        // When fof/user-directory is installed, view[1] is the link to the user directory page
+        const resultItems = view.filter(entry => {
+            return entry.attrs && entry.attrs.className && entry.attrs.className.indexOf('UserSearchResult') !== -1;
+        });
+
+        if (resultItems.length === 0) {
             if (query.length < 3) {
                 return [
                     m('li', Button.component({
@@ -20,30 +29,6 @@ export default class UsersSearchSourceWithoutInternalRouting extends UsersSearch
                 m('li', Button.component({
                     icon: 'fas fa-search-minus',
                 }, app.translator.trans('clarkwinkelmann-author-change.forum.search.no-results'))),
-            ];
-        }
-
-        let resultItems: Array<Mithril.Vnode> = [];
-
-        // We want to keep only the result <li>s, and not any header or stuff injected by another extension
-        // In core:
-        // view[0] is the header
-        // view[1+] are the results
-        // When fof/user-directory is installed, view[1] is the link to the user directory page
-        view.some(entry => {
-            if (entry.attrs && entry.attrs.className.indexOf('UserSearchResult') !== -1) {
-                resultItems.push(entry);
-
-                return true;
-            }
-
-            return false;
-        });
-
-        if (resultItems.length === 0) {
-            // Not translating this as it shouldn't be visible
-            return [
-                m('li', '[extension conflict]'),
             ];
         }
 
