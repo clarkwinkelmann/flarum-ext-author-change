@@ -1,7 +1,5 @@
-import * as Mithril from 'mithril';
 import app from 'flarum/forum/app';
-import {ComponentAttrs} from 'flarum/common/Component';
-import Modal from 'flarum/common/components/Modal';
+import Modal, {IInternalModalAttrs} from 'flarum/common/components/Modal';
 import Button from 'flarum/common/components/Button';
 import Discussion from 'flarum/common/models/Discussion';
 import Post from 'flarum/common/models/Post';
@@ -12,32 +10,30 @@ import SearchState from 'flarum/forum/states/SearchState';
 import Switch from 'flarum/common/components/Switch';
 import UserSearch from './UserSearch';
 
-interface UpdateAuthorModalAttrs extends ComponentAttrs {
+interface UpdateAuthorModalAttrs extends IInternalModalAttrs {
     related: Discussion | Post
 }
 
-// @ts-ignore TODO wrong Modal.view typings
-export default class UpdateAuthorModal extends Modal {
-    attrs!: UpdateAuthorModalAttrs
-    user!: User | null | false
-    createdAt!: string
+export default class UpdateAuthorModal extends Modal<UpdateAuthorModalAttrs> {
+    user!: User | null
+    createdAt?: string
     editedAt!: string
     syncFirstPost: boolean = false
-    otherModelForFirstPostSync: Discussion | Post | false = false
+    otherModelForFirstPostSync: Discussion | Post | null = null
     attributes: any = {}; // What we will send to the server. We only send what changed
     dirty: boolean = false
     loading: boolean = false
     userSearchState!: SearchState
 
-    oninit(vnode: Mithril.Vnode<UpdateAuthorModalAttrs, this>) {
+    oninit(vnode: any) {
         super.oninit(vnode);
 
         const {related} = this.attrs;
 
         const editedAt = related instanceof Post && related.editedAt();
 
-        this.user = related.user();
-        this.createdAt = related.createdAt().toISOString().slice(0, 16);
+        this.user = related.user() || null;
+        this.createdAt = related.createdAt()?.toISOString().slice(0, 16);
         this.editedAt = editedAt ? editedAt.toISOString().slice(0, 16) : '';
         this.userSearchState = new SearchState();
 
@@ -46,14 +42,14 @@ export default class UpdateAuthorModal extends Modal {
 
         if (this.showFirstPostSync()) {
             if (related instanceof Discussion) {
-                this.otherModelForFirstPostSync = related.firstPost();
+                this.otherModelForFirstPostSync = related.firstPost() || null;
 
                 // The firstPost relationship will not be loaded if the discussion is accessed directly
                 // we will try to find the first post in the store
-                if (this.otherModelForFirstPostSync === false) {
-                    this.otherModelForFirstPostSync = app.store.all('posts').find(post => {
+                if (this.otherModelForFirstPostSync === null) {
+                    this.otherModelForFirstPostSync = app.store.all<Post>('posts').find(post => {
                         return post.number() === 1 && post.discussion() === related;
-                    }) || false;
+                    }) || null;
                 }
             } else {
                 this.otherModelForFirstPostSync = related.discussion();
@@ -62,7 +58,8 @@ export default class UpdateAuthorModal extends Modal {
             if (
                 this.otherModelForFirstPostSync &&
                 this.otherModelForFirstPostSync.user() === this.user &&
-                this.otherModelForFirstPostSync.createdAt().toISOString().slice(0, 16) === this.createdAt
+                this.otherModelForFirstPostSync.createdAt()?.toISOString().slice(0, 16) === this.createdAt &&
+                this.createdAt // To make test fail if both createdAt are undefined
             ) {
                 this.syncFirstPost = true;
             }
@@ -101,9 +98,7 @@ export default class UpdateAuthorModal extends Modal {
                         },
                         className: 'Button Button--icon Button--link RemoveUserButton',
                     }) : null,
-                    // @ts-ignore TODO wrong avatar typings
                     avatar(this.user),
-                    // @ts-ignore TODO wrong username typings
                     username(this.user),
                 ]),
                 UserSearch.component({
@@ -122,11 +117,12 @@ export default class UpdateAuthorModal extends Modal {
             app.forum.attribute('clarkwinkelmannAuthorChangeCanEditDate') ? [
                 m('.Form-group', [
                     m('label', app.translator.trans('clarkwinkelmann-author-change.forum.modal.created_at')),
-                    m('input[type=datetime-local][required].FormControl', {
+                    m('input.FormControl', {
+                        type: 'datetime-local',
+                        required: true,
                         value: this.createdAt,
-                        onchange: (event: Event) => {
-                            // @ts-ignore we know target has a value
-                            const {value} = event.target;
+                        onchange: (event: InputEvent) => {
+                            const {value} = event.target as HTMLInputElement;
 
                             this.createdAt = value;
                             this.attributes.createdAt = value;
@@ -137,11 +133,11 @@ export default class UpdateAuthorModal extends Modal {
                 ]),
                 this.isPost() ? m('.Form-group', [
                     m('label', app.translator.trans('clarkwinkelmann-author-change.forum.modal.edited_at')),
-                    m('input[type=datetime-local].FormControl', {
+                    m('input.FormControl', {
+                        type: 'datetime-local',
                         value: this.editedAt,
-                        onchange: (event: Event) => {
-                            // @ts-ignore we know target has a value
-                            const {value} = event.target;
+                        onchange: (event: InputEvent) => {
+                            const {value} = event.target as HTMLInputElement;
 
                             this.editedAt = value;
                             this.attributes.editedAt = value;
@@ -198,19 +194,18 @@ export default class UpdateAuthorModal extends Modal {
         });
     }
 
-    // @ts-ignore TODO wrong Modal.onsubmit typings
-    onsubmit(e) {
-        e.preventDefault();
+    onsubmit(event: Event) {
+        event.preventDefault();
 
         this.loading = true;
 
-        this.saveModel(this.attrs.related).then(() => {
+        this.saveModel(this.attrs.related).then((() => {
             if (this.syncFirstPost && this.otherModelForFirstPostSync) {
                 return this.saveModel(this.otherModelForFirstPostSync);
             }
 
             return Promise.resolve();
-        }).then(() => {
+        }) as () => Promise<any>).then(() => {
             this.loading = false;
             this.dirty = false;
 
